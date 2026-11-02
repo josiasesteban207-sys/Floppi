@@ -1,0 +1,73 @@
+{
+  "project": "FLOPPI",
+  "version": "1.1.4",
+  "generated_at": "2026-10-31T22:06:07.721154+00:00",
+  "python_version": "3.10.0",
+  "checks": [
+    {
+      "name": "Project structure",
+      "status": "PASS",
+      "details": "All required files exist."
+    },
+    {
+      "name": "Compile application and worker",
+      "status": "PASS",
+      "return_code": 0,
+      "duration_seconds": 0.471,
+      "details": ""
+    },
+    {
+      "name": "Pytest suite",
+      "status": "PASS",
+      "return_code": 0,
+      "duration_seconds": 7.487,
+      "details": ".......................................................................  [100%]\n71 passed in 3.78s"
+    },
+    {
+      "name": "Indicator finite-input probe",
+      "status": "PASS",
+      "return_code": 0,
+      "duration_seconds": 0.267,
+      "details": "SMA/EMA rejected or safely handled all non-finite probes."
+    },
+    {
+      "name": "Provider isolation (static heuristic)",
+      "status": "PASS",
+      "details": "Provider filter and memory-key references found."
+    },
+    {
+      "name": "Candle-gap validation (static heuristic)",
+      "status": "PASS",
+      "details": "Gap-related validation markers found."
+    },
+    {
+      "name": "Secret hygiene (static scan)",
+      "status": "PASS",
+      "details": "No high-confidence hard-coded secrets found; per-worker hash/expiry/RLS controls detected. .env files were not read; this is not a full secret scanner."
+    },
+    {
+      "name": "DEMO/simulation disclosure",
+      "status": "PASS",
+      "details": "README documents DEMO/simulation scope."
+    },
+    {
+      "name": "Monitoring history RLS (static check)",
+      "status": "PASS",
+      "details": "RLS remains enabled and table privileges are limited to the service role."
+    }
+  ],
+  "score": {
+    "passed": 9,
+    "failed": 0,
+    "total": 9,
+    "percentage": 100.0,
+    "note": "This is an automated-check pass rate, not a certification or the weighted expert score from the manual audit."
+  },
+  "comparison": {
+    "previous_generated_at": "2026-10-31T15:24:05.555751+00:00",
+    "improved": 0,
+    "regressed": 0,
+    "unchanged": 8
+  },
+  "scope": "Local static checks and tests only; no live trading, broker, or production database actions."
+}

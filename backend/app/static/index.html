@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#0b1020" />
+  <meta name="description" content="FLOPPI, plataforma educativa de análisis histórico de mercados y backtesting simulado." />
+  <title>FLOPPI 1.3.2.2 | Inteligencia de mercado</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/assets/styles.css" />
+  <link rel="stylesheet" href="/assets/monitoring-history.css" />
+  <link rel="stylesheet" href="/assets/diagnostics.css" />
+  <link rel="stylesheet" href="/assets/scheduler.css" />
+  <link rel="stylesheet" href="/assets/signal-history.css" />
+  <link rel="stylesheet" href="/assets/auth.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#overview" aria-label="FLOPPI inicio"><span class="brand-mark">F</span><span>FLOPPI<span class="brand-sub">INTELIGENCIA DE MERCADO</span></span></a>
+      <div class="workspace-label">ESPACIO DE TRABAJO</div>
+      <nav class="nav-list" aria-label="Navegación principal">
+        <button class="nav-item active" data-page="overview"><span class="nav-icon">◫</span> Resumen</button>
+        <button class="nav-item" data-page="markets"><span class="nav-icon">⌁</span> Análisis de mercado</button>
+        <button class="nav-item" data-page="backtesting"><span class="nav-icon">◷</span> Backtesting</button>
+        <button class="nav-item" data-page="workers" data-admin-only><span class="nav-icon">⌘</span> Nodos de trabajo</button>
+        <button class="nav-item" data-page="monitoring" data-admin-only><span class="nav-icon">◉</span> Rendimiento y salud</button>
+        <button class="nav-item" data-page="diagnostics" data-admin-only><span class="nav-icon">⌕</span> Diagnóstico inteligente</button>
+        <button class="nav-item" data-page="history"><span class="nav-icon">▤</span> Historial e informes</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="sidebar-status"><span class="pulse-dot"></span><span><b>Entorno DEMO</b><small>Solo simulación</small></span></div>
+        <div class="sidebar-foot">FLOPPI <span id="versionLabel">1.3.2.2</span><br /><span class="muted">Plataforma educativa</span></div>
+      </div>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <button class="mobile-menu" id="mobileMenu" aria-label="Abrir menú">☰</button>
+        <div class="breadcrumb"><span>Espacio de trabajo</span><b>/</b><strong id="crumb">Resumen</strong></div>
+        <div class="top-actions"><span class="live-label"><i></i> ESTADO DEL SISTEMA</span><span class="demo-pill">● MODO DEMO</span><span id="authEmail" class="auth-email" hidden></span><button class="auth-logout" id="logoutBtn" type="button" hidden>Cerrar sesión</button><button class="icon-button" id="refreshBtn" title="Actualizar datos" aria-label="Actualizar">↻</button></div>
+      </header>
+
+      <div class="content-wrap">
+        <section class="page active" id="page-overview">
+          <div class="page-heading"><div><div class="eyebrow">TU ESPACIO DE ANÁLISIS</div><h1>Panel de control<span class="accent">.</span></h1><p class="page-subtitle">Una vista clara de tu entorno de análisis y procesamiento distribuido.</p></div><div class="heading-meta"><span class="date-chip" id="todayLabel">--</span><span class="status-chip" id="overviewStatus"><i></i> Comprobando sistema</span></div></div>
+          <div class="notice-banner"><span class="notice-icon">ⓘ</span><div><b>Entorno educativo de simulación</b><p>Todos los datos de mercado son sintéticos (DEMO). FLOPPI no ejecuta órdenes ni se conecta con brókeres.</p></div><span class="notice-tag">SOLO SIMULACIÓN</span></div>
+          <div class="metric-grid">
+            <article class="metric-card"><div class="metric-top"><span>Activos de mercado</span><span class="metric-icon violet">⌁</span></div><div class="metric-value" id="assetCount">—</div><div class="metric-foot">Disponibles en el catálogo DEMO</div></article>
+            <article class="metric-card"><div class="metric-top"><span>Velas históricas</span><span class="metric-icon blue">▥</span></div><div class="metric-value" id="candleCount">—</div><div class="metric-foot">Activo y temporalidad seleccionados</div></article>
+            <article class="metric-card"><div class="metric-top"><span>Nodos de trabajo</span><span class="metric-icon green">⌘</span></div><div class="metric-value" id="workerCount">—</div><div class="metric-foot" id="workerFoot">Esperando estado de nodos</div></article>
+            <article class="metric-card"><div class="metric-top"><span>Ejecuciones de backtesting</span><span class="metric-icon amber">◷</span></div><div class="metric-value" id="runCount">—</div><div class="metric-foot">Simulaciones históricas</div></article>
+          </div>
+          <div class="dashboard-grid">
+            <article class="panel chart-panel"><div class="panel-head"><div><div class="eyebrow">VISTA DEL MERCADO</div><h2>Evolución del precio</h2></div><div class="inline-controls"><select id="overviewAsset" aria-label="Activo"></select><select id="overviewTimeframe" aria-label="Temporalidad"><option>1d</option><option>4h</option><option>1h</option><option>15m</option></select></div></div><div class="chart-summary"><div><span class="muted">Último cierre</span><strong id="latestPrice">—</strong></div><span class="chart-caption" id="chartCaption">Serie histórica DEMO</span></div><div class="chart-container" id="overviewChart"><div class="empty-state">Recopila velas DEMO para mostrar el gráfico.</div></div><div class="chart-axis"><span>Más antiguo</span><span>Datos históricos</span><span>Más reciente</span></div></article>
+            <article class="panel activity-panel"><div class="panel-head"><div><div class="eyebrow">ENTORNO</div><h2>Estado del sistema</h2></div><span class="health-indicator"><i></i> API</span></div><div class="health-row"><span class="health-symbol">⌘</span><div><b>API de FLOPPI</b><small id="apiHealth">Comprobando conexión…</small></div><span class="health-state" id="apiState">—</span></div><div class="health-row"><span class="health-symbol">◈</span><div><b>Proveedor de datos</b><small>Fuente sintética de mercado</small></div><span class="health-state good">Disponible</span></div><div class="health-row"><span class="health-symbol">▦</span><div><b>Almacenamiento</b><small id="storageLabel">Comprobando almacenamiento…</small></div><span class="health-state" id="storageState">—</span></div><div class="activity-divider"></div><div class="panel-subhead">ACCIONES RÁPIDAS</div><button class="quick-action" data-go="markets"><span>＋</span><span><b>Preparar datos de mercado</b><small>Generar un conjunto histórico sintético</small></span><b>›</b></button><button class="quick-action" data-go="backtesting"><span>↗</span><span><b>Abrir backtesting</b><small>Encolar una simulación histórica</small></span><b>›</b></button></article>
+          </div>
+          <article class="panel table-panel"><div class="panel-head"><div><div class="eyebrow">ACTIVIDAD RECIENTE</div><h2>Backtests recientes</h2></div><button class="text-button" data-go="history">Ver historial <span>→</span></button></div><div id="overviewRuns" class="table-scroll"><div class="empty-state">Todavía no hay backtests. Tus ejecuciones aparecerán aquí.</div></div></article>
+        </section>
+
+        <section class="page" id="page-markets">
+          <div class="page-heading"><div><div class="eyebrow">EXPLORADOR DE DATOS</div><h1>Análisis de mercado<span class="accent">.</span></h1><p class="page-subtitle">Explora velas históricas sintéticas e indicadores técnicos explicables.</p></div><span class="demo-pill">● SOLO DATOS DEMO</span></div>
+          <article class="panel controls-panel"><div class="panel-head"><div><div class="eyebrow">CONFIGURACIÓN DE DATOS</div><h2>Datos históricos</h2></div><span class="subtle-tag">Proveedor sintético</span></div><div class="form-grid"><label>Activo de mercado<select id="marketAsset"></select></label><label>Temporalidad<select id="marketTimeframe"><option>1d</option><option>4h</option><option>1h</option><option>15m</option><option>5m</option><option>1m</option><option>1w</option></select></label><label>Velas históricas<select id="marketLimit"><option value="250">250 velas</option><option value="500" selected>500 velas</option><option value="1000">1.000 velas</option></select></label><div class="form-action"><button class="primary-button" id="collectBtn">Generar datos DEMO <span>↗</span></button></div></div><p class="helper-text" id="marketMessage">Genera un conjunto de datos antes de ejecutar el análisis. Los datos son sintéticos y educativos.</p></article>
+          <div class="analysis-layout"><article class="panel chart-panel"><div class="panel-head"><div><div class="eyebrow">HISTORIAL DE PRECIOS</div><h2 id="marketChartTitle">Activo seleccionado</h2></div><span class="subtle-tag">OHLCV</span></div><div class="chart-summary"><div><span class="muted">Último cierre</span><strong id="marketLatest">—</strong></div><span id="marketSample" class="chart-caption">No hay velas cargadas</span></div><div class="chart-container large-chart" id="marketChart"><div class="empty-state">Genera datos DEMO para comenzar a explorar.</div></div></article><article class="panel hybrid-panel"><div class="eyebrow">MOTOR EXPLICABLE</div><h2>Análisis híbrido</h2><p class="muted">Resumen descriptivo de la concordancia entre familias de métodos, no una predicción.</p><div class="hybrid-result" id="hybridResult"><span class="hybrid-orb">◎</span><b>Esperando datos</b><small>Ejecuta el análisis después de recopilar velas.</small></div><div id="hybridDetails" class="hybrid-details"></div><button class="secondary-button full-width" id="analyzeBtn" disabled>Ejecutar análisis técnico</button></article></div>
+          <article class="panel"><div class="panel-head"><div><div class="eyebrow">INDICADORES TÉCNICOS</div><h2>Lecturas de indicadores</h2></div><span class="subtle-tag">Últimos valores disponibles</span></div><div id="indicatorGrid" class="indicator-grid"><div class="empty-state">Los valores de los indicadores aparecerán después del análisis.</div></div></article>
+          <article class="panel signal-history-panel">
+            <div class="panel-head"><div><div class="eyebrow">ANÁLISIS HISTÓRICO</div><h2>Concordancia por temporalidad</h2></div><span class="subtle-tag">Observaciones DEMO · no es una predicción</span></div>
+            <div class="signal-history-controls">
+              <label>Temporalidades para comparar<select id="multiTimeframes" multiple size="4"><option value="15m" selected>15 minutos</option><option value="1h" selected>1 hora</option><option value="4h" selected>4 horas</option><option value="1d" selected>1 día</option><option value="1w">1 semana</option></select></label>
+              <button class="secondary-button" id="multiTimeframeBtn">Comparar temporalidades</button>
+            </div>
+            <div id="multiTimeframeResult" class="multi-timeframe-result"><div class="empty-state">Selecciona temporalidades con datos DEMO para comparar su evidencia observada.</div></div>
+            <div class="activity-divider"></div>
+            <div class="panel-head signal-history-heading"><div><div class="eyebrow">SEÑALES CAUSALES</div><h2>Historial y evaluación retrospectiva</h2></div><div class="signal-history-actions"><button class="secondary-button" id="recordSignalHistoryBtn">Registrar observaciones</button><button class="text-button" id="refreshSignalHistoryBtn">Consultar historial ↻</button></div></div>
+            <div class="signal-history-controls">
+              <label>Temporalidad del historial<select id="historyTimeframe"><option>1d</option><option>4h</option><option>1h</option><option>15m</option><option>5m</option><option>1m</option><option>1w</option></select></label>
+              <label>Desde<input id="signalHistoryStart" type="datetime-local" /></label>
+              <label>Hasta<input id="signalHistoryEnd" type="datetime-local" /></label>
+              <label>Muestras<select id="signalHistoryLimit"><option value="50">50</option><option value="100" selected>100</option><option value="250">250</option><option value="500">500</option></select></label>
+              <div class="signal-history-actions"><button class="text-button" id="signalHistoryJson" disabled>Exportar JSON</button><button class="text-button" id="signalHistoryCsv" disabled>Exportar CSV</button></div>
+            </div>
+            <p class="helper-text">Las señales utilizan solo velas hasta su cierre. La evaluación retrospectiva compara observaciones direccionales con el cierre de cinco velas posteriores; los resultados no representan probabilidad, disponibilidad ni rendimiento futuro.</p>
+            <div id="signalHistoryMetrics" class="signal-history-metrics"><div class="empty-state">Consulta o registra observaciones para mostrar estadísticas.</div></div>
+            <div id="signalHistoryChart" class="signal-history-chart"><div class="empty-state">El gráfico aparecerá cuando exista historial persistido.</div></div>
+            <div id="signalHistoryTable" class="table-scroll"></div>
+          </article>
+        </section>
+
+        <section class="page" id="page-backtesting">
+          <div class="page-heading"><div><div class="eyebrow">LABORATORIO DE ESTRATEGIAS</div><h1>Backtesting<span class="accent">.</span></h1><p class="page-subtitle">Evalúa estrategias basadas en reglas con velas históricas DEMO.</p></div><span class="demo-pill">● SIMULACIÓN</span></div>
+          <div class="notice-banner compact"><span class="notice-icon">ⓘ</span><div><b>Solo pruebas históricas</b><p>Los resultados describen datos sintéticos pasados y no anticipan el rendimiento futuro.</p></div></div>
+          <div class="metric-grid queue-metrics">
+            <article class="metric-card"><div class="metric-top">Pendientes <span class="metric-icon amber">◷</span></div><div class="metric-value" id="queuePending">—</div><div class="metric-foot">Esperando un worker</div></article>
+            <article class="metric-card"><div class="metric-top">En ejecución <span class="metric-icon blue">↻</span></div><div class="metric-value" id="queueRunning">—</div><div class="metric-foot">Con lease activo</div></article>
+            <article class="metric-card"><div class="metric-top">Completados <span class="metric-icon green">✓</span></div><div class="metric-value" id="queueCompleted">—</div><div class="metric-foot">Simulaciones terminadas</div></article>
+            <article class="metric-card"><div class="metric-top">Fallidos <span class="metric-icon violet">!</span></div><div class="metric-value" id="queueFailed">—</div><div class="metric-foot">Requieren revisión</div></article>
+          </div>
+          <article class="panel controls-panel"><div class="panel-head"><div><div class="eyebrow">NUEVO EXPERIMENTO</div><h2>Configura un backtest</h2></div><span class="subtle-tag">En espera de un nodo</span></div><div class="form-grid backtest-form"><label>Estrategia<select id="strategySelect"></select></label><label>Activo<select id="backtestAsset"></select></label><label>Temporalidad<select id="backtestTimeframe"><option>1d</option><option>4h</option><option>1h</option><option>15m</option><option>5m</option><option>1m</option><option>1w</option></select></label><label>Capital virtual inicial<input id="initialCapital" type="number" min="100" max="1000000000" value="10000" /></label><label>Fecha inicial<input id="backtestStart" type="date" /></label><label>Fecha final<input id="backtestEnd" type="date" /></label><div class="form-action span-all"><button class="primary-button" id="queueBacktestBtn">Encolar backtest <span>↗</span></button></div></div><p class="helper-text" id="backtestMessage">El backtest necesita velas históricas del activo y rango de fechas seleccionados.</p></article>
+          <article class="panel controls-panel">
+            <div class="panel-head"><div><div class="eyebrow">PLANIFICADOR DEMO</div><h2>Crear análisis periódico</h2></div><span class="subtle-tag">Sin órdenes financieras</span></div>
+            <div class="form-grid scheduler-form">
+              <label>Nombre de tarea<input id="schedulerName" type="text" minlength="2" maxlength="100" value="Análisis periódico" /></label>
+              <label>Estrategia<select id="schedulerStrategy"></select></label>
+              <label>Activo<select id="schedulerAsset"></select></label>
+              <label>Temporalidad<select id="schedulerTimeframe"><option>1d</option><option>4h</option><option>1h</option><option>15m</option><option>5m</option><option>1m</option><option>1w</option></select></label>
+              <label>Frecuencia<select id="schedulerInterval"><option value="60">Cada minuto</option><option value="300">Cada 5 minutos</option><option value="900">Cada 15 minutos</option><option value="3600" selected>Cada hora</option><option value="86400">Cada 24 horas</option><option value="604800">Cada 7 días</option></select></label>
+              <label>Prioridad (1–10)<input id="schedulerPriority" type="number" min="1" max="10" value="5" /></label>
+              <label>Concurrencia máxima<input id="schedulerConcurrency" type="number" min="1" max="4" value="1" /></label>
+              <label>Intentos máximos<input id="schedulerAttempts" type="number" min="1" max="10" value="3" /></label>
+              <label>Capital virtual<input id="schedulerCapital" type="number" min="100" max="1000000000" value="10000" /></label>
+              <label>Fecha inicial<input id="schedulerStart" type="date" /></label>
+              <label>Fecha final<input id="schedulerEnd" type="date" /></label>
+              <div class="form-action span-all"><button class="primary-button" id="createScheduleBtn">Programar análisis <span>↗</span></button></div>
+            </div>
+            <p class="helper-text" id="schedulerMessage">Usa velas históricas DEMO existentes; cada ejecución vuelve a verificar su integridad antes de procesarse.</p>
+          </article>
+          <article class="panel table-panel">
+            <div class="panel-head"><div><div class="eyebrow">TAREAS PROGRAMADAS</div><h2>Administrar planificador</h2></div><button class="text-button" id="reloadSchedules">Actualizar tareas ↻</button></div>
+            <div id="schedulerTasks" class="scheduler-list"><div class="empty-state">Cargando tareas programadas…</div></div>
+          </article>
+          <article class="panel table-panel">
+            <div class="panel-head"><div><div class="eyebrow">HISTORIAL DEL PLANIFICADOR</div><h2>Ejecuciones periódicas</h2></div></div>
+            <div id="schedulerRuns" class="table-scroll"><div class="empty-state">Cargando ejecuciones programadas…</div></div>
+          </article>
+          <article class="panel table-panel"><div class="panel-head"><div><div class="eyebrow">COLA DE EXPERIMENTOS</div><h2>Ejecuciones de backtesting</h2></div><button class="text-button" id="reloadRuns">Actualizar lista ↻</button></div><div id="backtestRuns" class="table-scroll"><div class="empty-state">Cargando ejecuciones de backtesting…</div></div></article>
+        </section>
+
+        <section class="page" id="page-workers">
+          <div class="page-heading"><div><div class="eyebrow">PROCESAMIENTO DISTRIBUIDO</div><h1>Nodos de trabajo<span class="accent">.</span></h1><p class="page-subtitle">Supervisa los equipos que procesan las simulaciones históricas en cola.</p></div><span class="subtle-tag">Workers 1.3.2.2</span></div>
+          <div class="notice-banner"><span class="notice-icon">ⓘ</span><div><b>El estado de los nodos es de solo lectura</b><p>Cada equipo debe iniciarse con su propia credencial. Los tokens nunca se muestran en la interfaz web.</p></div></div>
+          <div class="worker-grid" id="workerCards"><article class="panel worker-card"><div class="empty-state">Cargando estado de los nodos…</div></article></div>
+          <article class="panel"><div class="panel-head"><div><div class="eyebrow">GUÍA DE CONEXIÓN</div><h2>Conectar un nodo</h2></div><span class="subtle-tag">Señal de actividad saliente</span></div><ol class="guide-list"><li><b>Genera una credencial única</b><p>Ejecuta <code>python tools\provision_worker.py --node-id blacki --expires-in-days 90</code> desde la carpeta de tu proyecto.</p></li><li><b>Registra su hash en Supabase</b><p>Aplica el SQL generado en el editor SQL de Supabase. Mantén privado el token original.</p></li><li><b>Inicia el nodo localmente</b><pre>$env:FLOPPI_API_URL = "http://127.0.0.1:8000"
+$env:FLOPPI_NODE_ID = "blacki"
+$env:FLOPPI_NODE_TOKEN = "YOUR_PRIVATE_TOKEN"
+python worker\local_worker.py</pre></li></ol><p class="helper-text">Para nodos remotos, utiliza una URL HTTPS de la API. No expongas públicamente la API ni el token.</p></article>
+        </section>
+
+        <section class="page" id="page-monitoring">
+          <div class="page-heading"><div><div class="eyebrow">OBSERVABILIDAD DEL SISTEMA</div><h1>Rendimiento y salud<span class="accent">.</span></h1><p class="page-subtitle">Métricas puntuales del servidor y los workers, junto con un informe de salud operativo.</p></div><div class="heading-meta"><span class="subtle-tag" id="monitoringTimestamp">Esperando mediciones</span><button class="secondary-button" id="monitoringRefresh">Actualizar ↻</button></div></div>
+          <div class="notice-banner"><span class="notice-icon">ⓘ</span><div><b>Mediciones reales, no benchmarks</b><p>CPU, memoria y disco son observaciones puntuales del equipo. No representan velocidad comparativa ni tendencias históricas. Los datos ausentes se muestran como no disponibles.</p></div><span class="notice-tag">RUNTIME</span></div>
+          <div class="panel-head"><div><div class="eyebrow">SERVIDOR FLOPPI</div><h2>Recursos del servidor API</h2></div><span class="subtle-tag" id="apiMetricsSource">Fuente: servidor local</span></div>
+          <div class="metric-grid monitoring-metrics">
+            <article class="metric-card"><div class="metric-top"><span>CPU</span><span class="metric-icon violet">⌁</span></div><div class="metric-value" id="apiCpuMetric">—</div><div class="metric-foot">Uso instantáneo del host</div></article>
+            <article class="metric-card"><div class="metric-top"><span>Memoria RAM</span><span class="metric-icon blue">▥</span></div><div class="metric-value" id="apiMemoryMetric">—</div><div class="metric-foot" id="apiMemoryFoot">Uso y capacidad</div></article>
+            <article class="metric-card"><div class="metric-top"><span>Disco</span><span class="metric-icon amber">▤</span></div><div class="metric-value" id="apiDiskMetric">—</div><div class="metric-foot" id="apiDiskFoot">Espacio libre</div></article>
+            <article class="metric-card"><div class="metric-top"><span>Memoria del proceso</span><span class="metric-icon green">◈</span></div><div class="metric-value" id="apiProcessMetric">—</div><div class="metric-foot">Proceso Python de la API</div></article>
+          </div>
+          <article class="panel"><div class="panel-head"><div><div class="eyebrow">FLOTA DISTRIBUIDA</div><h2>Rendimiento por nodo</h2></div><span class="subtle-tag">Último heartbeat recibido</span></div><div id="workerPerformance" class="worker-grid"><div class="empty-state">Cargando métricas de workers…</div></div></article>
+          <article class="panel"><div class="panel-head"><div><div class="eyebrow">DIAGNÓSTICO</div><h2>Informe de salud del sistema</h2></div><div class="compare-actions"><button class="secondary-button" id="healthReportJson">Exportar informe JSON</button><button class="secondary-button" id="healthReportCsv">Exportar CSV</button></div></div><div class="health-report-summary"><strong id="overallHealth">Comprobando…</strong><span id="healthReportGenerated">—</span></div><div id="healthComponents" class="health-components"><div class="empty-state">Consultando API, almacenamiento, workers y cola…</div></div><p class="helper-text">El informe es una fotografía del momento de consulta. Un estado saludable no garantiza disponibilidad futura ni sustituye una auditoría de seguridad.</p></article>
+          <article class="panel">
+            <div class="panel-head"><div><div class="eyebrow">ESTADÍSTICAS HISTÓRICAS</div><h2>Estados observados cada 5 minutos</h2></div><div class="monitoring-history-controls"><label for="monitoringPeriod">Periodo<select id="monitoringPeriod"><option value="1">Última hora</option><option value="6">Últimas 6 horas</option><option value="24" selected>Últimas 24 horas</option><option value="168">Últimos 7 días</option><option value="720">Últimos 30 días</option></select></label><button class="secondary-button" id="monitoringHistoryJson">Exportar JSON</button><button class="secondary-button" id="monitoringHistoryCsv">Exportar CSV</button></div></div>
+            <p class="helper-text" id="monitoringHistoryMeta">Esperando la primera observación histórica.</p>
+            <div id="monitoringHistoryIndicators" class="monitoring-history-indicators"></div>
+            <div id="monitoringHistoryCharts" class="monitoring-history-charts"></div>
+            <div id="monitoringHistoryContent"><div class="empty-state">Cargando estadísticas del periodo…</div></div>
+            <p class="helper-text">Los porcentajes se calculan sobre las observaciones guardadas, no sobre disponibilidad continua. La cola muestra su promedio y máximo observados por muestra.</p>
+          </article>
+        </section>
+
+        <section class="page" id="page-diagnostics">
+          <div class="page-heading"><div><div class="eyebrow">OBSERVABILIDAD Y RESPUESTA SEGURA</div><h1>Diagnóstico inteligente<span class="accent">.</span></h1><p class="page-subtitle">Incidentes agrupados a partir de errores y observaciones reales de FLOPPI.</p></div><div class="heading-meta"><span class="subtle-tag" id="diagnosticsTimestamp">Esperando incidentes</span><button class="secondary-button" id="diagnosticsRefresh">Actualizar ↻</button></div></div>
+          <div class="notice-banner"><span class="notice-icon">ⓘ</span><div><b>Recomendaciones, no reparaciones automáticas</b><p>El centro registra señales observadas y propone comprobaciones seguras. No ejecuta acciones de reparación ni operaciones financieras. El historial es accesible solo en entorno de desarrollo hasta disponer de autorización administrativa.</p></div><span class="notice-tag">OBSERVADO</span></div>
+          <div class="metric-grid diagnostics-summary" id="diagnosticsSummary">
+            <article class="metric-card"><div class="metric-top"><span>Incidentes abiertos</span><span class="metric-icon violet">⌕</span></div><div class="metric-value" id="diagnosticsOpen">—</div><div class="metric-foot">Agrupados por componente y código</div></article>
+            <article class="metric-card"><div class="metric-top"><span>Críticos</span><span class="metric-icon amber">!</span></div><div class="metric-value" id="diagnosticsCritical">—</div><div class="metric-foot">Requieren revisión prioritaria</div></article>
+            <article class="metric-card"><div class="metric-top"><span>Errores</span><span class="metric-icon blue">×</span></div><div class="metric-value" id="diagnosticsErrors">—</div><div class="metric-foot">Señales abiertas observadas</div></article>
+            <article class="metric-card"><div class="metric-top"><span>Resueltos</span><span class="metric-icon green">✓</span></div><div class="metric-value" id="diagnosticsResolved">—</div><div class="metric-foot">Resolución manual o recuperación verificada</div></article>
+          </div>
+          <article class="panel">
+            <div class="panel-head"><div><div class="eyebrow">HISTORIAL DE INCIDENTES</div><h2>Eventos observados</h2></div><div class="diagnostics-controls">
+              <label for="diagnosticsPeriod">Periodo<select id="diagnosticsPeriod"><option value="1">Última hora</option><option value="6">Últimas 6 horas</option><option value="24" selected>Últimas 24 horas</option><option value="168">Últimos 7 días</option><option value="720">Últimos 30 días</option></select></label>
+              <label for="diagnosticsSeverity">Severidad<select id="diagnosticsSeverity"><option value="">Todas</option><option value="critical">Crítico</option><option value="error">Error</option><option value="warning">Advertencia</option><option value="info">Informativo</option></select></label>
+              <label for="diagnosticsStatus">Estado<select id="diagnosticsStatus"><option value="">Todos</option><option value="open">Abiertos</option><option value="resolved">Resueltos</option></select></label>
+              <button class="secondary-button" id="diagnosticsExportJson">Exportar JSON</button><button class="secondary-button" id="diagnosticsExportCsv">Exportar CSV</button>
+            </div></div>
+            <p class="helper-text" id="diagnosticsMeta">Cargando historial persistente…</p>
+            <div id="diagnosticsIncidentList"><div class="empty-state">Consultando incidentes observados…</div></div>
+          </article>
+          <article class="panel">
+            <div class="panel-head"><div><div class="eyebrow">REGISTRO CENTRALIZADO</div><h2>Eventos de API, workers y tareas</h2></div><div class="event-log-controls">
+              <label for="eventLogLevel">Nivel<select id="eventLogLevel"><option value="">Todos</option><option>INFO</option><option>WARNING</option><option>ERROR</option><option>CRITICAL</option></select></label>
+              <label for="eventLogComponent">Componente<select id="eventLogComponent"><option value="">Todos</option><option value="api">API</option><option value="database">Base de datos</option><option value="storage">Almacenamiento</option><option value="workers">Workers</option><option value="tasks">Tareas</option><option value="task_queue">Cola de tareas</option><option value="system_resources">Recursos</option></select></label>
+              <label for="eventLogSearch">Buscar<input id="eventLogSearch" type="search" maxlength="100" placeholder="Código, mensaje o componente" /></label>
+              <button class="secondary-button" id="eventLogSearchButton">Buscar</button>
+              <button class="secondary-button" id="eventLogExportJson">JSON</button><button class="secondary-button" id="eventLogExportCsv">CSV</button>
+            </div></div>
+            <p class="helper-text" id="eventLogMeta">Cargando eventos operativos…</p>
+            <div class="event-log-table-wrap" id="eventLogContent"><div class="empty-state">Consultando registro centralizado…</div></div>
+            <div class="event-log-pagination"><button class="secondary-button" id="eventLogPrevious" disabled>← Anterior</button><span id="eventLogPageLabel">Página 1 de 1</span><button class="secondary-button" id="eventLogNext" disabled>Siguiente →</button></div>
+            <p class="helper-text">Eventos UTC con request_id/task_id para correlación. Mensajes y metadatos sensibles se omiten o redactan; retención configurable mediante <code>EVENT_LOG_RETENTION_DAYS</code>.</p>
+          </article>
+        </section>
+
+        <section class="page" id="page-history">
+          <div class="page-heading"><div><div class="eyebrow">REGISTRO DE ACTIVIDAD</div><h1>Historial e informes<span class="accent">.</span></h1><p class="page-subtitle">Consulta las solicitudes históricas de experimentos y su estado de procesamiento.</p></div><button class="secondary-button" id="historyRefresh">Actualizar historial ↻</button></div>
+          <article class="panel controls-panel experiment-compare-panel">
+            <div class="panel-head"><div><div class="eyebrow">ANÁLISIS COMPARATIVO</div><h2>Comparar experimentos</h2></div><span class="subtle-tag">Solo ejecuciones completadas</span></div>
+            <div class="compare-controls">
+              <label for="compareRunSelect">Selecciona entre 2 y 10 backtests completados</label>
+              <select id="compareRunSelect" multiple size="5" aria-describedby="compareHelp"></select>
+              <div class="compare-actions"><button class="primary-button" id="compareBtn">Comparar resultados ↗</button><button class="secondary-button" id="exportJsonBtn" disabled>Exportar JSON</button><button class="secondary-button" id="exportCsvBtn" disabled>Exportar CSV</button></div>
+              <p class="helper-text" id="compareHelp">La comparación usa las métricas históricas guardadas. Los resultados no representan rendimiento futuro ni recomendaciones financieras.</p>
+            </div>
+            <div id="comparisonResult" class="comparison-result"><div class="empty-state">Selecciona experimentos para generar una comparación.</div></div>
+          </article>
+          <article class="panel table-panel"><div class="panel-head"><div><div class="eyebrow">TODOS LOS EXPERIMENTOS</div><h2>Historial de backtesting</h2></div><span class="subtle-tag">Últimos 100 registros</span></div><div id="historyRuns" class="table-scroll"><div class="empty-state">Cargando historial…</div></div></article>
+          <article class="panel report-note"><div class="report-icon">▤</div><div><b>Los informes de auditoría están en tu carpeta del proyecto</b><p>Ejecuta <code>python tools\audit.py</code> para generar una auditoría local actualizada en <code>reports/</code>. El panel no inventa resultados de auditoría ni afirma una verificación real de Supabase.</p></div></article>
+        </section>
+
+        <footer class="footer"><span>© 2026 FLOPPI 1.3.2.2 · Inteligencia de mercado educativa</span><span>Diseñado para analizar, no para ejecutar <b>•</b> <a href="/docs" target="_blank" rel="noreferrer">Documentación de la API ↗</a></span></footer>
+      </div>
+    </main>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <div id="authGate" class="auth-gate" hidden>
+    <form id="authForm" class="auth-card">
+      <div class="eyebrow">SESIÓN SEGURA</div>
+      <h1>Iniciar sesión<span class="accent">.</span></h1>
+      <p>Usa tu cuenta de Supabase para acceder a FLOPPI. Los permisos operativos requieren rol de administrador.</p>
+      <label for="authEmailInput">Correo electrónico</label>
+      <input id="authEmailInput" name="email" type="email" autocomplete="username" required />
+      <label for="authPasswordInput">Contraseña</label>
+      <input id="authPasswordInput" name="password" type="password" autocomplete="current-password" required />
+      <button id="authSubmit" type="submit">Iniciar sesión</button>
+      <p id="authError" class="auth-error" role="alert" hidden></p>
+      <small>Sesión temporal en esta pestaña. FLOPPI es una plataforma DEMO y no ejecuta órdenes reales.</small>
+    </form>
+  </div>
+  <script src="/assets/auth.bundle.js" defer></script>
+  <script src="/assets/app.js" defer></script>
+  <script src="/assets/monitoring-history.js" defer></script>
+  <script src="/assets/diagnostics.js" defer></script>
+  <script src="/assets/scheduler.js" defer></script>
+</body>
+</html>

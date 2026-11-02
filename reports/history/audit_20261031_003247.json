@@ -1,0 +1,68 @@
+{
+  "project": "FLOPPI",
+  "version": "0.4.0",
+  "generated_at": "2026-10-31T00:32:47.817531+00:00",
+  "python_version": "3.13.5",
+  "checks": [
+    {
+      "name": "Project structure",
+      "status": "PASS",
+      "details": "All required files exist."
+    },
+    {
+      "name": "Compile application and worker",
+      "status": "PASS",
+      "return_code": 0,
+      "duration_seconds": 1.394,
+      "details": ""
+    },
+    {
+      "name": "Pytest suite",
+      "status": "PASS",
+      "return_code": 0,
+      "duration_seconds": 4.652,
+      "details": ".................................                                        [100%]\n33 passed in 0.92s"
+    },
+    {
+      "name": "Indicator finite-input probe",
+      "status": "FAIL",
+      "return_code": 1,
+      "duration_seconds": 1.634,
+      "details": "Traceback (most recent call last):\n  File \"<string>\", line 4, in <module>\n    cases = [(\"sma_nan\", sma([1.0, float(\"nan\"), 3.0], 2)),\n                         ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/mnt/data/floppi_work/Floppi/backend/app/indicators/moving_averages.py\", line 16, in sma\n    data = finite_values(values)\n  File \"/mnt/data/floppi_work/Floppi/backend/app/indicators/moving_averages.py\", line 9, in finite_values\n    raise ValueError(f\"{label}[{index}] must be finite (not NaN or infinity)\")\nValueError: values[1] must be finite (not NaN or infinity)"
+    },
+    {
+      "name": "Provider isolation (static heuristic)",
+      "status": "PASS",
+      "details": "Provider filter and memory-key references found."
+    },
+    {
+      "name": "Candle-gap validation (static heuristic)",
+      "status": "PASS",
+      "details": "Gap-related validation markers found."
+    },
+    {
+      "name": "Secret hygiene (static scan)",
+      "status": "PASS",
+      "details": "No high-confidence secret patterns found in scanned source files; .env files were not read and this is not a full secret scanner."
+    },
+    {
+      "name": "DEMO/simulation disclosure",
+      "status": "PASS",
+      "details": "README documents DEMO/simulation scope."
+    }
+  ],
+  "score": {
+    "passed": 7,
+    "failed": 1,
+    "total": 8,
+    "percentage": 87.5,
+    "note": "This is an automated-check pass rate, not a certification or the weighted expert score from the manual audit."
+  },
+  "comparison": {
+    "previous_generated_at": "2026-10-31T00:02:29.776654+00:00",
+    "improved": 3,
+    "regressed": 0,
+    "unchanged": 5
+  },
+  "scope": "Local static checks and tests only; no live trading, broker, or production database actions."
+}

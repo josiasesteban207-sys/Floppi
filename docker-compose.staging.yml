@@ -1,0 +1,30 @@
+name: floppi-staging
+
+services:
+  staging-postgres:
+    image: postgres:16-alpine@sha256:0cefaabd882e42bcb2a2f3dc56d3ce4770560ba62fd7f197f1a2e008fd5731ab
+    environment:
+      POSTGRES_DB: ${STAGING_POSTGRES_DB:?Set STAGING_POSTGRES_DB in .env.staging}
+      POSTGRES_USER: ${STAGING_POSTGRES_USER:?Set STAGING_POSTGRES_USER in .env.staging}
+      POSTGRES_PASSWORD: ${STAGING_POSTGRES_PASSWORD:?Set STAGING_POSTGRES_PASSWORD in .env.staging}
+    volumes:
+      - staging-postgres-data:/var/lib/postgresql/data
+    networks:
+      - staging-internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+    restart: "no"
+    shm_size: 256mb
+
+networks:
+  staging-internal:
+    name: floppi-staging-internal
+    internal: true
+
+volumes:
+  staging-postgres-data:
+    name: floppi-staging-postgres-data

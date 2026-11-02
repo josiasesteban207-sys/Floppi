@@ -1,0 +1,68 @@
+{
+  "project": "FLOPPI",
+  "version": "0.7.0",
+  "generated_at": "2026-10-31T01:47:11.488088+00:00",
+  "python_version": "3.10.0",
+  "checks": [
+    {
+      "name": "Project structure",
+      "status": "PASS",
+      "details": "All required files exist."
+    },
+    {
+      "name": "Compile application and worker",
+      "status": "PASS",
+      "return_code": 0,
+      "duration_seconds": 0.464,
+      "details": ""
+    },
+    {
+      "name": "Pytest suite",
+      "status": "PASS",
+      "return_code": 0,
+      "duration_seconds": 12.386,
+      "details": "...............................................                          [100%]\n47 passed in 5.72s"
+    },
+    {
+      "name": "Indicator finite-input probe",
+      "status": "PASS",
+      "return_code": 0,
+      "duration_seconds": 0.257,
+      "details": "SMA/EMA rejected or safely handled all non-finite probes."
+    },
+    {
+      "name": "Provider isolation (static heuristic)",
+      "status": "PASS",
+      "details": "Provider filter and memory-key references found."
+    },
+    {
+      "name": "Candle-gap validation (static heuristic)",
+      "status": "PASS",
+      "details": "Gap-related validation markers found."
+    },
+    {
+      "name": "Secret hygiene (static scan)",
+      "status": "PASS",
+      "details": "No high-confidence hard-coded secrets found; per-worker hash/expiry/RLS controls detected. .env files were not read; this is not a full secret scanner."
+    },
+    {
+      "name": "DEMO/simulation disclosure",
+      "status": "PASS",
+      "details": "README documents DEMO/simulation scope."
+    }
+  ],
+  "score": {
+    "passed": 8,
+    "failed": 0,
+    "total": 8,
+    "percentage": 100.0,
+    "note": "This is an automated-check pass rate, not a certification or the weighted expert score from the manual audit."
+  },
+  "comparison": {
+    "previous_generated_at": "2026-10-31T01:41:42.488145+00:00",
+    "improved": 0,
+    "regressed": 0,
+    "unchanged": 8
+  },
+  "scope": "Local static checks and tests only; no live trading, broker, or production database actions."
+}

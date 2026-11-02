@@ -1,0 +1,113 @@
+{
+  "project": "FLOPPI",
+  "version": "1.3.2.1",
+  "generated_at": "2026-11-01T20:33:31.267532+00:00",
+  "python_version": "3.10.0",
+  "checks": [
+    {
+      "name": "Project structure",
+      "status": "PASS",
+      "details": "All required files exist."
+    },
+    {
+      "name": "Compile application and worker",
+      "status": "PASS",
+      "return_code": 0,
+      "duration_seconds": 0.787,
+      "details": ""
+    },
+    {
+      "name": "Pytest suite",
+      "status": "PASS",
+      "return_code": 0,
+      "duration_seconds": 11.156,
+      "details": "........................................................................ [ 46%]\n........................................................................ [ 92%]\n............                                                             [100%]\n156 passed in 7.70s"
+    },
+    {
+      "name": "Indicator finite-input probe",
+      "status": "PASS",
+      "return_code": 0,
+      "duration_seconds": 0.237,
+      "details": "SMA/EMA rejected or safely handled all non-finite probes."
+    },
+    {
+      "name": "Provider isolation (static heuristic)",
+      "status": "PASS",
+      "details": "Provider filter and memory-key references found."
+    },
+    {
+      "name": "Candle-gap validation (static heuristic)",
+      "status": "PASS",
+      "details": "Gap-related validation markers found."
+    },
+    {
+      "name": "Secret hygiene (static scan)",
+      "status": "PASS",
+      "details": "No high-confidence hard-coded secrets found; per-worker hash/expiry/RLS controls detected. .env files were not read; this is not a full secret scanner."
+    },
+    {
+      "name": "DEMO/simulation disclosure",
+      "status": "PASS",
+      "details": "README documents DEMO/simulation scope."
+    },
+    {
+      "name": "Security Core controls (static check)",
+      "status": "PASS",
+      "details": "Verified admin metadata, mutation auditing, expiring worker tokens, browser-only public Auth, safe worker errors, and loopback Compose binding."
+    },
+    {
+      "name": "Staging isolation (static configuration)",
+      "status": "PASS",
+      "details": "Loopback port, internal network, dedicated storage, private settings and no Supabase target are configured; runtime connectivity is not checked."
+    },
+    {
+      "name": "Monitoring history RLS (static check)",
+      "status": "PASS",
+      "details": "RLS remains enabled and table privileges are limited to the service role."
+    },
+    {
+      "name": "Diagnostic history RLS (static check)",
+      "status": "PASS",
+      "details": "Incident history uses unique fingerprints, deduplicated observations, enabled RLS, and server-role-only access."
+    },
+    {
+      "name": "Central event log RLS/privacy (static check)",
+      "status": "PASS",
+      "details": "Events have unique/correlation IDs, configurable retention, sensitive-key filtering, RLS, and service-role-only storage."
+    },
+    {
+      "name": "Task scheduler RLS/deduplication (static check)",
+      "status": "PASS",
+      "details": "Schedules use RLS/service-role grants, unique execution slots, bounded ownership, priority claims, and safe cancellation."
+    },
+    {
+      "name": "Worker load balancing/RPC access (static check)",
+      "status": "PASS",
+      "details": "Claims use fresh resource/heartbeat observations, task history, one-job capacity, row locking, and service-role-only RPC access."
+    },
+    {
+      "name": "Expired worker lease recovery/access (static check)",
+      "status": "PASS",
+      "details": "Recovery is bounded/idempotent, uses row locking and retry backoff, and exposes its RPC only to service_role."
+    },
+    {
+      "name": "Hybrid signal history RLS/deduplication (static check)",
+      "status": "PASS",
+      "details": "Point-in-time signals use unique timestamps, completed-outcome updates, RLS, and service-role-only storage."
+    }
+  ],
+  "score": {
+    "passed": 17,
+    "failed": 0,
+    "total": 17,
+    "percentage": 100.0,
+    "note": "This is an automated-check pass rate, not a certification or the weighted expert score from the manual audit."
+  },
+  "comparison": {
+    "previous_generated_at": "2026-11-01T14:20:00.482212+00:00",
+    "improved": 0,
+    "regressed": 0,
+    "unchanged": 16
+  },
+  "scope": "Local static checks and tests only; no live trading, broker, or production database actions."
+}

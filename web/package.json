@@ -1,0 +1,14 @@
+{
+  "name": "floppi-web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/auth.js --bundle --format=iife --platform=browser --target=es2020 --outfile=../backend/app/static/auth.bundle.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

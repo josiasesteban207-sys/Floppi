@@ -1,0 +1,78 @@
+{
+  "project": "FLOPPI",
+  "version": "1.1.5",
+  "generated_at": "2026-11-01T04:23:54.374757+00:00",
+  "python_version": "3.10.0",
+  "checks": [
+    {
+      "name": "Project structure",
+      "status": "PASS",
+      "details": "All required files exist."
+    },
+    {
+      "name": "Compile application and worker",
+      "status": "PASS",
+      "return_code": 0,
+      "duration_seconds": 5.054,
+      "details": ""
+    },
+    {
+      "name": "Pytest suite",
+      "status": "FAIL",
+      "return_code": 1,
+      "duration_seconds": 52.847,
+      "details": "....................................................F................... [ 86%]\n...........                                                              [100%]\n================================== FAILURES ===================================\n_____ test_health_report_marks_demo_storage_and_missing_workers_degraded ______\n\nmonkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001EE438B9930>\n\n    def test_health_report_marks_demo_storage_and_missing_workers_degraded(monkeypatch):\n        monkeypatch.setattr(settings, \"app_env\", \"development\")\n        monkeypatch.setattr(\"app.api.monitoring_routes.get_supabase\", lambda: None)\n        response = client.get(\"/api/v1/monitoring/health\")\n        assert response.status_code == 200\n        body = response.json()\n>       assert body[\"overall_status\"] == \"degraded\"\nE       AssertionError: assert 'unhealthy' == 'degraded'\nE         \nE         - degraded\nE         + unhealthy\n\ntests\\test_monitoring.py:40: AssertionError\n=========================== short test summary info ===========================\nFAILED tests\\test_monitoring.py::test_health_report_marks_demo_storage_and_missing_workers_degraded\n1 failed, 82 passed in 28.39s"
+    },
+    {
+      "name": "Indicator finite-input probe",
+      "status": "PASS",
+      "return_code": 0,
+      "duration_seconds": 3.015,
+      "details": "SMA/EMA rejected or safely handled all non-finite probes."
+    },
+    {
+      "name": "Provider isolation (static heuristic)",
+      "status": "PASS",
+      "details": "Provider filter and memory-key references found."
+    },
+    {
+      "name": "Candle-gap validation (static heuristic)",
+      "status": "PASS",
+      "details": "Gap-related validation markers found."
+    },
+    {
+      "name": "Secret hygiene (static scan)",
+      "status": "PASS",
+      "details": "No high-confidence hard-coded secrets found; per-worker hash/expiry/RLS controls detected. .env files were not read; this is not a full secret scanner."
+    },
+    {
+      "name": "DEMO/simulation disclosure",
+      "status": "PASS",
+      "details": "README documents DEMO/simulation scope."
+    },
+    {
+      "name": "Monitoring history RLS (static check)",
+      "status": "PASS",
+      "details": "RLS remains enabled and table privileges are limited to the service role."
+    },
+    {
+      "name": "Diagnostic history RLS (static check)",
+      "status": "PASS",
+      "details": "Incident history uses unique fingerprints, deduplicated observations, enabled RLS, and server-role-only access."
+    }
+  ],
+  "score": {
+    "passed": 9,
+    "failed": 1,
+    "total": 10,
+    "percentage": 90.0,
+    "note": "This is an automated-check pass rate, not a certification or the weighted expert score from the manual audit."
+  },
+  "comparison": {
+    "previous_generated_at": "2026-10-31T22:56:15.808371+00:00",
+    "improved": 0,
+    "regressed": 1,
+    "unchanged": 9
+  },
+  "scope": "Local static checks and tests only; no live trading, broker, or production database actions."
+}
