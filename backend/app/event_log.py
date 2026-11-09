@@ -251,7 +251,13 @@ async def run_event_retention_worker() -> None:
     while True:
         try:
             pruned = await asyncio.to_thread(event_log_repository.prune_expired)
-            logger.info("Expired central event records pruned: %s", pruned)
+            from app.client_events import client_event_repository
+
+            client_pruned = await asyncio.to_thread(client_event_repository.prune_expired)
+            logger.info(
+                "Expired central event records pruned: system=%s client=%s",
+                pruned, client_pruned,
+            )
         except Exception as exc:
             logger.exception(
                 "Central event retention cleanup failed (%s).",

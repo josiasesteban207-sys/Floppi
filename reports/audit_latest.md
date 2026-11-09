@@ -1,8 +1,8 @@
 # FLOPPI Audit Report 1.3.2.2
 
-- Generated: 2026-11-02T21:15:17.863105+00:00
+- Generated: 2026-11-05T02:07:50.331891+00:00
 - Python: `3.10.0`
-- Automated check pass rate: **100.0%** (17/17)
+- Automated check pass rate: **100.0%** (16/16)
 
 > This automated pass rate is not a production certification or a replacement for manual/security/integration review.
 
@@ -12,7 +12,7 @@
 |---|---|---|
 | Project structure | **PASS** | All required files exist. |
 | Compile application and worker | **PASS** |  |
-| Pytest suite | **PASS** | ........................................................................ [ 44%] ........................................................................ [ 88%] ..................                                                       [100%] 162 passed in 12.94s |
+| Pytest suite | **WARN** | Skipped by user. |
 | Indicator finite-input probe | **PASS** | SMA/EMA rejected or safely handled all non-finite probes. |
 | Provider isolation (static heuristic) | **PASS** | Provider filter and memory-key references found. |
 | Candle-gap validation (static heuristic) | **PASS** | Gap-related validation markers found. |
@@ -30,22 +30,13 @@
 
 ## Test command output
 
-### Compile application and worker (0.764 s)
+### Compile application and worker (0.708 s)
 
 ```text
 
 ```
 
-### Pytest suite (18.915 s)
-
-```text
-........................................................................ [ 44%]
-........................................................................ [ 88%]
-..................                                                       [100%]
-162 passed in 12.94s
-```
-
-### Indicator finite-input probe (0.234 s)
+### Indicator finite-input probe (0.374 s)
 
 ```text
 SMA/EMA rejected or safely handled all non-finite probes.
@@ -62,7 +53,7 @@ SMA/EMA rejected or safely handled all non-finite probes.
 
 ## Comparison with previous audit
 
-- Previous report: `2026-11-02T17:33:28.424879+00:00`
+- Previous report: `2026-11-02T21:15:17.863105+00:00`
 - Checks improved: 0
-- Checks regressed: 0
-- Checks unchanged: 17
+- Checks regressed: 1
+- Checks unchanged: 16

@@ -1,5 +1,7 @@
 from collections.abc import Sequence
 
+from aiohttp_retry import Any
+
 from app.analysis.signal_analyzer import classify_latest
 from app.data.models import Candle
 from app.indicators.momentum import macd, rsi
@@ -8,8 +10,8 @@ from app.indicators.volatility import atr, bollinger_bands
 from app.indicators.volume import vwap
 
 
-def calculate_indicators(candles: Sequence[Candle]) -> dict[str, list[float | None]]:
-    closes = [float(candle.close) for candle in candles]
+def calculate_indicators(candles: Sequence[Candle]) -> dict[str, list[float | Any]]:
+    closes = [float(candle.close) for candle in candles] 
     highs = [float(candle.high) for candle in candles]
     lows = [float(candle.low) for candle in candles]
     volumes = [float(candle.volume) for candle in candles]

@@ -5,7 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field, model_validator
 
-from app.api.auth import optional_user_id
+from app.api.auth import AuthenticatedUser, get_current_user, optional_user_id
 from app.api.worker_auth import verify_node
 from app.api import routes as node_routes
 from app.backtesting.engine import run_backtest
@@ -22,6 +22,8 @@ from app.data.fingerprint import candle_fingerprint
 from app.settings import settings
 from app.supabase_store import get_supabase
 from app.worker_balancer import build_worker_dispatch_plan
+from app.devices import device_registry
+from app.realtime import realtime_hub
 
 router = APIRouter()
 
@@ -32,6 +34,16 @@ class CompareRequest(BaseModel):
 
 class FailureReport(BaseModel):
     message: str = Field(min_length=1, max_length=1000)
+
+
+class DeviceAssignment(BaseModel):
+    device_id: UUID
+
+
+def _require_owner(user: AuthenticatedUser | None) -> AuthenticatedUser:
+    if user is None:
+        raise HTTPException(status_code=401, detail="Sign in is required for task coordination.")
+    return user
 
 
 class WalkForwardCreate(BaseModel):
@@ -183,7 +195,7 @@ def evaluate_walk_forward(
 @router.get("/backtesting/queue/summary")
 def backtest_queue_summary(user_id: str | None = Depends(optional_user_id)):
     runs = backtest_repository.list_runs(user_id, 500)
-    counts = {status: 0 for status in ("pending", "running", "completed", "failed")}
+    counts = {status: 0 for status in ("pending", "running", "completed", "failed", "cancelled", "paused")}
     for run in runs:
         status = run.get("status")
         if status in counts:
@@ -215,6 +227,152 @@ def get_backtest_metrics(run_id: UUID, user_id: str | None = Depends(optional_us
     if metrics is None:
         raise HTTPException(status_code=404, detail="Backtest metrics are not available.")
     return metrics
+
+
+@router.post("/backtesting/runs/{run_id}/cancel")
+def cancel_backtest_run(run_id: UUID, user: AuthenticatedUser | None = Depends(get_current_user)):
+    owner = _require_owner(user)
+    run = backtest_repository.cancel_pending_run(run_id, owner.id)
+    realtime_hub.publish_user_event(owner.id, "task.cancelled", {"run_id": str(run_id)})
+    return {"accepted": True, "run": run}
+
+
+@router.post("/backtesting/runs/{run_id}/assign")
+def assign_backtest_run(
+    run_id: UUID, payload: DeviceAssignment,
+    user: AuthenticatedUser | None = Depends(get_current_user),
+):
+    owner = _require_owner(user)
+    device_registry.get_owned(payload.device_id, owner.id)
+    run = backtest_repository.assign_pending_run(run_id, owner.id, payload.device_id)
+    realtime_hub.publish_user_event(owner.id, "task.assigned", {
+        "run_id": str(run_id), "device_id": str(payload.device_id),
+    })
+    return {"accepted": True, "run": run}
+
+
+@router.post("/backtesting/runs/{run_id}/assign/automatic")
+def automatically_assign_backtest_run(
+    run_id: UUID, user: AuthenticatedUser | None = Depends(get_current_user),
+):
+    owner = _require_owner(user)
+    runs = backtest_repository.list_runs(owner.id, 500)
+    active_by_device: dict[str, int] = {}
+    for existing in runs:
+        device_id = existing.get("assigned_device_id")
+        if device_id and existing.get("status") == "running":
+            active_by_device[device_id] = active_by_device.get(device_id, 0) + 1
+    now = datetime.now(timezone.utc)
+    candidates = []
+    for device in device_registry.list_owned(owner.id):
+        seen = device.get("last_seen")
+        if not seen or device.get("status") != "online" or "backtest" not in device.get("capabilities", []):
+            continue
+        try:
+            if now - datetime.fromisoformat(seen.replace("Z", "+00:00")) > timedelta(seconds=90):
+                continue
+        except (ValueError, TypeError):
+            continue
+        metrics = device.get("resource_metrics") or {}
+        cpu, memory = metrics.get("cpu_percent"), metrics.get("memory_percent")
+        if not isinstance(cpu, (int, float)) or not isinstance(memory, (int, float)):
+            continue
+        if max(cpu, memory) > 85 or int(metrics.get("active_tasks", 0)) >= 1:
+            continue
+        if active_by_device.get(device["device_id"], 0) >= 1:
+            continue
+        candidates.append((cpu + memory, device["device_id"]))
+    if not candidates:
+        raise HTTPException(status_code=409, detail="No online device has fresh capacity for a backtest.")
+    _, selected_id = min(candidates)
+    run = backtest_repository.assign_pending_run(run_id, owner.id, UUID(selected_id))
+    realtime_hub.publish_user_event(owner.id, "task.assigned", {
+        "run_id": str(run_id), "device_id": selected_id, "selection": "automatic",
+    })
+    return {"accepted": True, "run": run, "device_id": selected_id}
+
+
+@router.post("/backtesting/runs/{run_id}/pause")
+def pause_backtest_run(run_id: UUID, user: AuthenticatedUser | None = Depends(get_current_user)):
+    owner = _require_owner(user)
+    run = backtest_repository.pause_pending_run(run_id, owner.id)
+    realtime_hub.publish_user_event(owner.id, "task.paused", {"run_id": str(run_id)})
+    return {"accepted": True, "run": run}
+
+
+@router.post("/backtesting/runs/{run_id}/resume")
+def resume_backtest_run(run_id: UUID, user: AuthenticatedUser | None = Depends(get_current_user)):
+    owner = _require_owner(user)
+    run = backtest_repository.resume_paused_run(run_id, owner.id)
+    realtime_hub.publish_user_event(owner.id, "task.resumed", {"run_id": str(run_id)})
+    return {"accepted": True, "run": run}
+
+
+@router.post("/devices/{device_id}/backtesting/runs/{run_id}/claim")
+def claim_device_backtest_run(
+    device_id: UUID, run_id: UUID,
+    user: AuthenticatedUser | None = Depends(get_current_user),
+):
+    owner = _require_owner(user)
+    device_registry.get_owned(device_id, owner.id)
+    run = backtest_repository.claim_assigned_run(run_id, owner.id, device_id)
+    job = backtest_repository.prepare_claimed_run(run)
+    realtime_hub.publish_user_event(owner.id, "task.started", {
+        "run_id": str(run_id), "device_id": str(device_id),
+    })
+    return {"accepted": True, **job, "lease_token": run["lease_token"]}
+
+
+@router.post("/devices/{device_id}/backtesting/runs/{run_id}/heartbeat")
+def heartbeat_device_backtest_run(
+    device_id: UUID, run_id: UUID, x_job_lease_token: str = Header(min_length=32, max_length=64),
+    user: AuthenticatedUser | None = Depends(get_current_user),
+):
+    owner = _require_owner(user)
+    device = device_registry.get_owned(device_id, owner.id)
+    run = backtest_repository.get_run(run_id, owner.id)
+    if run.get("assigned_device_id") != str(device_id):
+        raise HTTPException(status_code=403, detail="Run is not assigned to this device.")
+    renewed = backtest_repository.renew_run_lease(run_id, device["node_id"], x_job_lease_token)
+    return {"accepted": True, "lease_expires_at": renewed.get("lease_expires_at")}
+
+
+@router.post("/devices/{device_id}/backtesting/runs/{run_id}/complete")
+def complete_device_backtest_run(
+    device_id: UUID, run_id: UUID, payload: BacktestResult,
+    x_job_lease_token: str = Header(min_length=32, max_length=64),
+    user: AuthenticatedUser | None = Depends(get_current_user),
+):
+    owner = _require_owner(user)
+    device = device_registry.get_owned(device_id, owner.id)
+    run = backtest_repository.get_run(run_id, owner.id)
+    if run.get("assigned_device_id") != str(device_id):
+        raise HTTPException(status_code=403, detail="Run is not assigned to this device.")
+    completed = backtest_repository.complete_run(
+        run_id, device["node_id"], x_job_lease_token, payload.model_dump(mode="json")
+    )
+    realtime_hub.publish_user_event(owner.id, "task.completed", {"run_id": str(run_id)})
+    return {"accepted": True, "run": completed}
+
+
+@router.post("/devices/{device_id}/backtesting/runs/{run_id}/fail")
+def fail_device_backtest_run(
+    device_id: UUID, run_id: UUID, payload: FailureReport,
+    x_job_lease_token: str = Header(min_length=32, max_length=64),
+    user: AuthenticatedUser | None = Depends(get_current_user),
+):
+    owner = _require_owner(user)
+    device = device_registry.get_owned(device_id, owner.id)
+    run = backtest_repository.get_run(run_id, owner.id)
+    if run.get("assigned_device_id") != str(device_id):
+        raise HTTPException(status_code=403, detail="Run is not assigned to this device.")
+    failed = backtest_repository.fail_run(
+        run_id, device["node_id"], x_job_lease_token, payload.message
+    )
+    realtime_hub.publish_user_event(owner.id, "task.failed", {
+        "run_id": str(run_id), "status": failed["status"],
+    })
+    return {"accepted": True, "run": failed}
 
 
 @router.post("/backtesting/compare")

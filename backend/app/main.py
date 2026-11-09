@@ -17,6 +17,9 @@ from app.api.monitoring_routes import router as monitoring_router, run_monitorin
 from app.api.diagnostics_routes import router as diagnostics_router
 from app.api.event_routes import router as event_router
 from app.api.scheduler_routes import router as scheduler_router
+from app.api.device_routes import router as device_router
+from app.realtime import router as realtime_router
+from app.distributed_events import distributed_event_bridge
 from app.diagnostics import diagnostic_repository, record_api_failure
 from app.event_log import event_log_repository, run_event_retention_worker
 from app.scheduler import run_task_scheduler
@@ -40,6 +43,9 @@ async def lifespan(app: FastAPI):
         run_worker_recovery(),
         name="expired-backtest-lease-recovery",
     )
+    distributed_events = asyncio.create_task(
+        distributed_event_bridge.run(), name="supabase-distributed-events"
+    )
     try:
         yield
     finally:
@@ -47,6 +53,7 @@ async def lifespan(app: FastAPI):
         retention_worker.cancel()
         scheduler_worker.cancel()
         recovery_worker.cancel()
+        distributed_events.cancel()
         try:
             await sampler
         except asyncio.CancelledError:
@@ -61,6 +68,10 @@ async def lifespan(app: FastAPI):
             pass
         try:
             await recovery_worker
+        except asyncio.CancelledError:
+            pass
+        try:
+            await distributed_events
         except asyncio.CancelledError:
             pass
 
@@ -89,6 +100,8 @@ app.include_router(monitoring_router, prefix="/api/v1")
 app.include_router(diagnostics_router, prefix="/api/v1")
 app.include_router(event_router, prefix="/api/v1")
 app.include_router(scheduler_router, prefix="/api/v1")
+app.include_router(device_router, prefix="/api/v1")
+app.include_router(realtime_router, prefix="/api/v1")
 
 
 async def _record_api_failure(status_code: int, method: str, error_type: str | None = None) -> None:

@@ -242,7 +242,7 @@ class BacktestRepository:
         )
 
     def count_runs_by_status(self) -> dict[str, int]:
-        statuses = ("pending", "running", "completed", "failed")
+        statuses = ("pending", "running", "completed", "failed", "cancelled", "paused")
         client = get_supabase()
         if client is not None:
             counts: dict[str, int] = {}
@@ -276,6 +276,143 @@ class BacktestRepository:
                 return record
         raise HTTPException(status_code=404, detail="Backtest run not found")
 
+    def cancel_pending_run(self, run_id: UUID, user_id: str) -> dict[str, Any]:
+        """Cancel only an owned, unleased queued run; running leases stay authoritative."""
+        client = get_supabase()
+        if client is not None:
+            result = client.rpc("cancel_pending_backtest_run", {
+                "p_run_id": str(run_id), "p_user_id": user_id,
+            }).execute()
+            if not result.data:
+                raise HTTPException(status_code=409, detail="Run is not pending or cannot be cancelled.")
+            return result.data[0]
+        with _lock:
+            run = _runs.get(str(run_id))
+            if not run or run.get("user_id") != user_id:
+                raise HTTPException(status_code=404, detail="Backtest run not found")
+            if run.get("status") != "pending" or run.get("lease_token"):
+                raise HTTPException(status_code=409, detail="Only unleased pending runs can be cancelled.")
+            run.update({"status": "cancelled", "completed_at": datetime.now(timezone.utc).isoformat()})
+            return dict(run)
+
+    def pause_pending_run(self, run_id: UUID, user_id: str) -> dict[str, Any]:
+        client = get_supabase()
+        if client is not None:
+            try:
+                result = client.rpc("pause_pending_backtest_run", {
+                    "p_run_id": str(run_id), "p_user_id": user_id,
+                }).execute()
+            except Exception as exc:
+                raise HTTPException(status_code=503, detail="Task pause is unavailable; verify migration 019.") from exc
+            if not result.data:
+                raise HTTPException(status_code=409, detail="Only unleased pending runs can be paused.")
+            return result.data[0]
+        with _lock:
+            run = _runs.get(str(run_id))
+            if not run or run.get("user_id") != user_id:
+                raise HTTPException(status_code=404, detail="Backtest run not found")
+            if run.get("status") != "pending" or run.get("lease_token"):
+                raise HTTPException(status_code=409, detail="Only unleased pending runs can be paused.")
+            run.update({"status": "paused", "paused_at": datetime.now(timezone.utc).isoformat()})
+            return dict(run)
+
+    def resume_paused_run(self, run_id: UUID, user_id: str) -> dict[str, Any]:
+        client = get_supabase()
+        if client is not None:
+            try:
+                result = client.rpc("resume_paused_backtest_run", {
+                    "p_run_id": str(run_id), "p_user_id": user_id,
+                }).execute()
+            except Exception as exc:
+                raise HTTPException(status_code=503, detail="Task resume is unavailable; verify migration 019.") from exc
+            if not result.data:
+                raise HTTPException(status_code=409, detail="Run is not paused.")
+            return result.data[0]
+        with _lock:
+            run = _runs.get(str(run_id))
+            if not run or run.get("user_id") != user_id:
+                raise HTTPException(status_code=404, detail="Backtest run not found")
+            if run.get("status") != "paused" or run.get("lease_token"):
+                raise HTTPException(status_code=409, detail="Run is not paused.")
+            run.update({"status": "pending", "paused_at": None})
+            return dict(run)
+
+    def assign_pending_run(self, run_id: UUID, user_id: str, device_id: UUID) -> dict[str, Any]:
+        client = get_supabase()
+        if client is not None:
+            result = client.rpc("assign_pending_backtest_run", {
+                "p_run_id": str(run_id), "p_user_id": user_id, "p_device_id": str(device_id),
+            }).execute()
+            if not result.data:
+                raise HTTPException(status_code=409, detail="Run or device cannot be assigned.")
+            return result.data[0]
+        from app.devices import device_registry
+        device = device_registry.get_owned(device_id, user_id)
+        if device.get("status") != "online" or not device.get("last_seen"):
+            raise HTTPException(status_code=409, detail="Only online devices can receive assignments.")
+        with _lock:
+            run = _runs.get(str(run_id))
+            if not run or run.get("user_id") != user_id:
+                raise HTTPException(status_code=404, detail="Backtest run not found")
+            if run.get("status") != "pending" or run.get("lease_token"):
+                raise HTTPException(status_code=409, detail="Only unleased pending runs can be assigned.")
+            run["assigned_device_id"] = str(device_id)
+            return dict(run)
+
+    def unassign_revoked_device_runs(self, device_id: UUID | str, user_id: str) -> int:
+        client = get_supabase()
+        if client is not None:
+            # The atomic revoke RPC already releases all unleased pending assignments.
+            return 0
+        changed = 0
+        with _lock:
+            for run in _runs.values():
+                if (run.get("user_id") == user_id
+                        and run.get("assigned_device_id") == str(device_id)
+                        and run.get("status") in {"pending", "paused"}
+                        and not run.get("lease_token")):
+                    run["assigned_device_id"] = None
+                    changed += 1
+        return changed
+
+    def claim_assigned_run(self, run_id: UUID, user_id: str, device_id: UUID) -> dict[str, Any]:
+        client = get_supabase()
+        if client is not None:
+            result = client.rpc("claim_assigned_backtest_run", {
+                "p_run_id": str(run_id), "p_user_id": user_id, "p_device_id": str(device_id),
+            }).execute()
+            if not result.data:
+                raise HTTPException(status_code=409, detail="Run is not assigned and claimable by this device.")
+            return result.data[0]
+        from app.devices import device_registry
+        device = device_registry.get_owned(device_id, user_id)
+        with _lock:
+            run = _runs.get(str(run_id))
+            retry_after = run.get("retry_after") if run else None
+            retry_ready = not retry_after or datetime.fromisoformat(
+                retry_after.replace("Z", "+00:00")
+            ) <= datetime.now(timezone.utc)
+            if (not run or run.get("user_id") != user_id
+                    or run.get("assigned_device_id") != str(device_id)
+                    or run.get("status") != "pending" or not retry_ready
+                    or int(run.get("attempt_count", 0)) >= int(run.get("max_attempts", 3))):
+                raise HTTPException(status_code=409, detail="Run is not assigned and claimable by this device.")
+            if any(
+                active.get("node_id") == device["node_id"] and active.get("status") == "running"
+                and active.get("lease_expires_at")
+                and datetime.fromisoformat(active["lease_expires_at"].replace("Z", "+00:00")) > datetime.now(timezone.utc)
+                for active in _runs.values()
+            ):
+                raise HTTPException(status_code=409, detail="Device already holds an active task lease.")
+            now = datetime.now(timezone.utc)
+            lease_token = str(uuid4())
+            run.update({"status": "running", "node_id": device["node_id"],
+                        "started_at": now.isoformat(), "claimed_at": now.isoformat(),
+                        "lease_expires_at": (now + timedelta(minutes=5)).isoformat(),
+                        "lease_token": lease_token,
+                        "attempt_count": int(run.get("attempt_count", 0)) + 1})
+            return dict(run)
+
     def claim_next_run(self, node_id: str) -> dict[str, Any] | None:
         client = get_supabase()
         if client is not None:
@@ -306,6 +443,8 @@ class BacktestRepository:
                             })
                 pending = []
                 for existing in _runs.values():
+                    if existing.get("assigned_device_id") is not None:
+                        continue
                     retry_after = existing.get("retry_after")
                     retry_ready = not retry_after or datetime.fromisoformat(retry_after.replace("Z", "+00:00")) <= now
                     lease_expired = False
@@ -337,17 +476,15 @@ class BacktestRepository:
                     "last_error": None,
                     "retry_after": None,
                 })
-        strategy_id = UUID(run["strategy_id"])
-        strategy = self.get_strategy(strategy_id, run.get("user_id"))
+        return self.prepare_claimed_run(run)
+
+    def prepare_claimed_run(self, run: dict[str, Any]) -> dict[str, Any]:
+        """Hydrate a claimed run through the same data validation as legacy workers."""
+        node_id = run["node_id"]
+        strategy = self.get_strategy(UUID(run["strategy_id"]), run.get("user_id"))
         start = datetime.fromisoformat(run["start_date"].replace("Z", "+00:00"))
         end = datetime.fromisoformat(run["end_date"].replace("Z", "+00:00"))
-        candles = market_repository.list_candles(
-            UUID(run["asset_id"]),
-            run["timeframe"],
-            start,
-            end,
-            5000,
-        )
+        candles = market_repository.list_candles(UUID(run["asset_id"]), run["timeframe"], start, end, 5000)
         if not candles:
             self.fail_run(UUID(run["id"]), node_id, run["lease_token"], "No candles available for the requested period.", retryable=False)
             raise HTTPException(status_code=422, detail="No candles available for the requested period.")
@@ -355,12 +492,9 @@ class BacktestRepository:
             self.fail_run(UUID(run["id"]), node_id, run["lease_token"], "Historical candle data changed after the run was queued.", retryable=False)
             raise HTTPException(status_code=409, detail="Historical candle data changed after the run was queued.")
         asset = market_repository.get_asset(UUID(run["asset_id"]))
-        market_code = asset.get("market_code") or asset.get("markets", {}).get("code")
         return {
-            "run": run,
-            "strategy": strategy,
-            "candles": candles,
-            "market_code": market_code,
+            "run": run, "strategy": strategy, "candles": candles,
+            "market_code": asset.get("market_code") or asset.get("markets", {}).get("code"),
         }
 
     def list_worker_runs(self, limit: int = 1000) -> list[dict[str, Any]]:
@@ -411,6 +545,11 @@ class BacktestRepository:
                 attempts = int(run.get("attempt_count", 1))
                 max_attempts = int(run.get("max_attempts", 3))
                 message = run.get("last_error") or "Worker lease expired before the task completed."
+                assigned_device_id = run.get("assigned_device_id")
+                if assigned_device_id:
+                    from app.devices import device_registry
+                    if not device_registry.is_recently_online(assigned_device_id, run.get("user_id", "")):
+                        run["assigned_device_id"] = None
                 run.update({
                     "last_error": message,
                     "last_failed_at": now.isoformat(),
